@@ -2,7 +2,7 @@
 
 Webová aplikace pro vyhledávání, ukládání a přehrávání filmů a seriálů ze služeb Webshare a Fastshare. Aplikace používá lokální SQLite databázi a jednoduché webové rozhraní v češtině.
 
-Aktuální verze: **0.1.0**
+Aktuální verze: **0.1.1**
 
 ## Funkce
 
@@ -78,7 +78,7 @@ Spuštění konkrétní verze:
 
 ```powershell
 Set-Location C:\Temp\SCW
-.\UPDATE.ps1 -Version v0.1.0
+.\UPDATE.ps1 -Version v0.1.1
 ```
 
 Skript zachová `.env` a `data`, stáhne zdrojové soubory z GitHubu a znovu sestaví kontejnery přes `docker compose up -d --build`.

@@ -1,11 +1,11 @@
 param(
-    [string]$Version = "v0.1.0"
+    [string]$Version = "v0.1.1"
 )
 
 $ErrorActionPreference = "Stop"
 $installPath = "C:\Temp\SCW"
 $repositoryUrl = "https://github.com/pavelvraj/scw.git"
-$firstInitialization = $false
+$preservedNames = @(".git", ".env", "data", "certs", "docker-compose.override.yml", "docker-compose.override.yaml")
 
 function Invoke-Git {
     param(
@@ -15,96 +15,88 @@ function Invoke-Git {
 
     & git -C $installPath @Arguments
     if ($LASTEXITCODE -ne 0) {
-        throw "Git selhal: git -C `"$installPath`" $($Arguments -join ' ')"
+        throw "Git failed: git -C `"$installPath`" $($Arguments -join ' ')"
     }
 }
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    throw "Git není nainstalovaný nebo není v PATH. Nainstaluj Git for Windows a spusť skript znovu."
+    throw "Git is not installed or is not available in PATH."
 }
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    throw "Docker není nainstalovaný nebo není v PATH. Spusť Docker Desktop a zkus to znovu."
+    throw "Docker is not installed or is not available in PATH."
 }
 
 New-Item -ItemType Directory -Force -Path $installPath | Out-Null
 
 $gitDirectory = Join-Path $installPath ".git"
 if (-not (Test-Path -LiteralPath $gitDirectory)) {
-    $firstInitialization = $true
-    $allowedExistingItems = @("data", ".env", ".env.example", "UPDATE.ps1")
-    $unexpectedItems = @(
-        Get-ChildItem -Force -LiteralPath $installPath |
-            Where-Object { $_.Name -notin $allowedExistingItems }
-    )
-
-    if ($unexpectedItems.Count -gt 0) {
-        $names = $unexpectedItems.Name -join ", "
-        throw "Cílová složka $installPath obsahuje jiné soubory než data/.env. Nejdříve je zazálohuj nebo odstraň: $names"
-    }
-
-    Write-Host "Inicializuji Git repozitář přímo v $installPath..." -ForegroundColor Cyan
-    Invoke-Git -Arguments @("init")
-    Invoke-Git -Arguments @("remote", "add", "origin", $repositoryUrl)
-} else {
-    $currentRemote = (& git -C $installPath remote get-url origin 2>$null)
+    Write-Host "Initializing Git repository in $installPath..." -ForegroundColor Cyan
+    & git -C $installPath init
     if ($LASTEXITCODE -ne 0) {
-        Invoke-Git -Arguments @("remote", "add", "origin", $repositoryUrl)
-    } elseif ($currentRemote.Trim() -ne $repositoryUrl) {
-        Invoke-Git -Arguments @("remote", "set-url", "origin", $repositoryUrl)
+        throw "Git init failed."
     }
 }
 
-Write-Host "Stahuji tag $Version z GitHubu..." -ForegroundColor Cyan
-Invoke-Git -Arguments @("fetch", "--tags", "origin")
-Invoke-Git -Arguments @("rev-parse", "--verify", "$Version^{commit}")
+$currentRemote = (& git -C $installPath remote get-url origin 2>$null)
+if ($LASTEXITCODE -ne 0) {
+    Invoke-Git -Arguments @("remote", "add", "origin", $repositoryUrl)
+} elseif ($currentRemote.Trim() -ne $repositoryUrl) {
+    Invoke-Git -Arguments @("remote", "set-url", "origin", $repositoryUrl)
+}
 
-$temporaryBackups = @()
-if ($firstInitialization) {
-    foreach ($fileName in @("UPDATE.ps1", ".env.example")) {
-        $sourcePath = Join-Path $installPath $fileName
-        if (Test-Path -LiteralPath $sourcePath) {
-            $backupPath = Join-Path ([System.IO.Path]::GetTempPath()) ("SCW-" + [guid]::NewGuid().ToString("N") + "-" + $fileName)
-            Move-Item -LiteralPath $sourcePath -Destination $backupPath
-            $temporaryBackups += $backupPath
-        }
+Write-Host "Downloading $Version from GitHub..." -ForegroundColor Cyan
+Invoke-Git -Arguments @("fetch", "--tags", "--force", "origin")
+
+$versionCommit = (& git -C $installPath rev-parse --verify "$Version^{commit}" 2>$null)
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($versionCommit)) {
+    $availableTags = @(& git -C $installPath tag --list "v*" --sort=-version:refname | Select-Object -First 10)
+    $tagText = if ($availableTags.Count -gt 0) { $availableTags -join ", " } else { "none" }
+    throw "Version $Version does not exist on GitHub. Available tags: $tagText"
+}
+
+if (Test-Path -LiteralPath (Join-Path $installPath "docker-compose.yml")) {
+    Write-Host "Stopping existing Docker services..." -ForegroundColor Cyan
+    & docker compose -f (Join-Path $installPath "docker-compose.yml") down
+    if ($LASTEXITCODE -ne 0) {
+        throw "Docker Compose could not stop the existing services."
     }
 }
 
-try {
-    Invoke-Git -Arguments @("checkout", "--detach", $Version)
-} catch {
-    foreach ($backupPath in $temporaryBackups) {
-        $backupName = Split-Path -Leaf $backupPath
-        if ($backupName -like "*-UPDATE.ps1") {
-            Move-Item -LiteralPath $backupPath -Destination (Join-Path $installPath "UPDATE.ps1")
-        } elseif ($backupName -like "*-.env.example") {
-            Move-Item -LiteralPath $backupPath -Destination (Join-Path $installPath ".env.example")
-        }
+$backupPath = Join-Path (Split-Path $installPath -Parent) ("SCW-backup-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+$itemsToReplace = @(
+    Get-ChildItem -Force -LiteralPath $installPath |
+        Where-Object { $_.Name -notin $preservedNames }
+)
+
+if ($itemsToReplace.Count -gt 0) {
+    New-Item -ItemType Directory -Force -Path $backupPath | Out-Null
+    foreach ($item in $itemsToReplace) {
+        Move-Item -LiteralPath $item.FullName -Destination $backupPath
     }
-    throw
+    Write-Host "Old source files were moved to $backupPath" -ForegroundColor Yellow
 }
 
-foreach ($backupPath in $temporaryBackups) {
-    if (Test-Path -LiteralPath $backupPath) {
-        Remove-Item -LiteralPath $backupPath -Force
-    }
-}
+Write-Host "Checking out $Version..." -ForegroundColor Cyan
+Invoke-Git -Arguments @("checkout", "--detach", $Version)
 
-if (-not (Test-Path -LiteralPath (Join-Path $installPath ".env"))) {
-    Copy-Item -LiteralPath (Join-Path $installPath ".env.example") -Destination (Join-Path $installPath ".env")
-    Write-Host "Vytvořen .env. Nastav v něm svou doménu před prvním spuštěním Dockeru." -ForegroundColor Yellow
+$environmentFile = Join-Path $installPath ".env"
+if (-not (Test-Path -LiteralPath $environmentFile)) {
+    Copy-Item -LiteralPath (Join-Path $installPath ".env.example") -Destination $environmentFile
+    Write-Host "Created .env from .env.example. Check DOMAIN before using the public URL." -ForegroundColor Yellow
 }
 
 New-Item -ItemType Directory -Force -Path (Join-Path $installPath "data") | Out-Null
 Set-Location -LiteralPath $installPath
 
-Write-Host "Spouštím Docker Compose z $installPath..." -ForegroundColor Cyan
+Write-Host "Building and starting Docker Compose..." -ForegroundColor Cyan
 & docker compose up -d --build
 if ($LASTEXITCODE -ne 0) {
-    throw "Docker Compose selhal. Zkontroluj logy příkazem: docker compose logs --tail=100"
+    throw "Docker Compose failed. Check: docker compose logs --tail=100"
 }
 
-Write-Host "Hotovo. Nasazená verze: $Version" -ForegroundColor Green
-Write-Host "Adresář dat zůstal zachován: $(Join-Path $installPath 'data')"
-Write-Host "Případné logy: docker compose -f `"$(Join-Path $installPath 'docker-compose.yml')`" logs -f"
+Write-Host "Update complete: $Version" -ForegroundColor Green
+Write-Host "Data preserved in: $(Join-Path $installPath 'data')"
+if ($itemsToReplace.Count -gt 0) {
+    Write-Host "Backup preserved in: $backupPath"
+}

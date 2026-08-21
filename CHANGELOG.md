@@ -2,6 +2,16 @@
 
 Všechny významné změny tohoto projektu jsou zapisovány v tomto souboru.
 
+## [0.1.1] - 2026-08-21
+
+### Opraveno
+
+- `UPDATE.ps1` nyní aktualizuje i existující instalaci se starými zdrojovými soubory,
+- staré zdrojové soubory se před aktualizací přesunou do záložního adresáře,
+- `data`, `.env` a případné `certs` zůstávají zachované,
+- chybějící Git tag se nyní oznámí s přehledem dostupných verzí,
+- výstup PowerShell updateru je kompatibilní se starším kódováním konzole.
+
 ## [0.1.0] - 2026-08-21
 
 ### Přidáno
