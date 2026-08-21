@@ -106,4 +106,4 @@ Verze je vedena v souboru `VERSION` a odpovídá verzím Git tagů ve formátu `
 
 ## Licence
 
-Licence zatím není deklarována. Používej pouze vlastní přístupové údaje a respektuj podmínky služeb, ze kterých aplikace načítá data.
+Projekt je zveřejněný pod licencí **GNU GPL v3**; úplné znění je v souboru [LICENSE](LICENSE). Používej pouze vlastní přístupové údaje a respektuj podmínky služeb, ze kterých aplikace načítá data.
