@@ -13,6 +13,7 @@ Všechny významné změny tohoto projektu jsou zapisovány v tomto souboru.
 - HTML5 přehrávání, stahování a lokální stream proxy,
 - import a export databáze,
 - česká dokumentace pro provoz za domácím routerem.
+- PowerShell updater pro instalaci do existujícího adresáře `C:\Temp\SCW`.
 
 ### Opraveno
 

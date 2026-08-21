@@ -70,6 +70,19 @@ docker compose logs -f caddy streamcinema
 
 Test z internetu prováděj ideálně z mobilních dat. Některé routery nepodporují NAT loopback, takže veřejná doména nemusí fungovat z vlastní Wi-Fi, i když je přesměrování správně nastavené.
 
+## Aktualizace pomocí UPDATE.ps1
+
+Soubor `UPDATE.ps1` je určený pro cílový Windows počítač, kde je Docker směrovaný do `C:\Temp\SCW`. Skript umí pracovat i s již existujícím adresářem, který obsahuje pouze `data`, a nevytváří vnořený klon repozitáře.
+
+Spuštění konkrétní verze:
+
+```powershell
+Set-Location C:\Temp\SCW
+.\UPDATE.ps1 -Version v0.1.0
+```
+
+Skript zachová `.env` a `data`, stáhne zdrojové soubory z GitHubu a znovu sestaví kontejnery přes `docker compose up -d --build`.
+
 ## Nastavení účtů
 
 V záložce **Nastavení** zadej alespoň jeden účet:
