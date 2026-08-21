@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    container_name: streamcinema-proxy
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      streamcinema:
+        condition: service_healthy
+    environment:
+      TZ: Europe/Prague
+      DOMAIN: ${DOMAIN:-streamcinema.vrajhome.freeddns.org}
+
+  streamcinema:
+    build: .
+    container_name: stream-cinema
+    expose:
+      - "8765"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Prague
+      STREAMCINEMA_ALLOWED_HOSTS: "${DOMAIN:-streamcinema.vrajhome.freeddns.org},localhost,127.0.0.1"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8765/api/ping', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  caddy_data:
+  caddy_config:

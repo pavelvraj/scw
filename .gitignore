@@ -1,0 +1,35 @@
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Lokální konfigurace a tajné údaje
+.env
+.env.*
+!.env.example
+
+# Aplikační data
+data/*.sqlite
+data/*.sqlite-*
+data/options.json
+data/*.tmp
+*.log
+
+# Testy, buildy a nástroje
+.pytest_cache/
+.coverage
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# IDE a OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

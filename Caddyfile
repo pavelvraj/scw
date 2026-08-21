@@ -1,0 +1,10 @@
+# Stream Cinema – HTTP reverse proxy bez TLS.
+# Router i Docker zveřejňují TCP port 8765.
+{
+    admin off
+    auto_https off
+}
+
+http://{$DOMAIN}:8765 {
+    reverse_proxy streamcinema:8765
+}

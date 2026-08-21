@@ -1,0 +1,2 @@
+# HTTP-only deployment does not need the Dynu DNS or ACME plugin.
+FROM caddy:2-alpine

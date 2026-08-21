@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Cinema · Desktop</title>
+    <link rel="stylesheet" href="static/style.css?v=0.4.0">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div>
+                <h1>Stream Cinema</h1>
+                <p>Samostatná desktopová verze · data zůstávají na tomto počítači</p>
+            </div>
+            <form class="search-box" id="searchForm" action="api/search" method="get">
+                <input type="text" id="searchInput" name="q" placeholder="Hledat film nebo seriál">
+                <input type="hidden" id="searchType" name="media_type" value="movie">
+                <div class="segmented" role="group" aria-label="Typ hledání">
+                    <button type="button" class="option-button active" data-option-target="searchType" data-option-value="movie">Film</button>
+                    <button type="button" class="option-button" data-option-target="searchType" data-option-value="tvshow">Seriál</button>
+                </div>
+                <button type="submit" id="searchButton" onclick="window.streamCinemaSearch && window.streamCinemaSearch(event)">Hledat</button>
+            </form>
+        </header>
+
+        <section id="status" class="status hidden"></section>
+
+        <nav class="tabs">
+            <button type="button" class="tab-button active" data-tab="searchTab">Hledání</button>
+            <button type="button" class="tab-button" data-tab="collectionTab">Sbírka</button>
+            <button type="button" class="tab-button" data-tab="settingsTab">Nastavení</button>
+        </nav>
+
+        <section id="searchTab" class="tab-page active">
+            <section id="searchPanel" class="search-panel">
+                <div class="empty-state">
+                    Zadej název, vyber film nebo seriál a spusť hledání.
+                </div>
+            </section>
+        </section>
+
+        <section id="collectionTab" class="tab-page">
+            <main class="workspace">
+                <aside class="catalog">
+                    <div class="catalog-toolbar">
+                        <h2>Sbírka</h2>
+                        <input type="hidden" id="typeFilter" value="all">
+                        <div class="segmented compact" role="group" aria-label="Filtr sbírky">
+                            <button type="button" class="option-button active" data-option-target="typeFilter" data-option-value="all">Vše</button>
+                            <button type="button" class="option-button" data-option-target="typeFilter" data-option-value="movie">Filmy</button>
+                            <button type="button" class="option-button" data-option-target="typeFilter" data-option-value="tvshow">Seriály</button>
+                        </div>
+                    </div>
+                    <input class="catalog-filter" id="catalogFilter" placeholder="Filtrovat sbírku">
+                    <div id="catalogList" class="catalog-list"></div>
+                </aside>
+
+                <section id="detailPanel" class="detail-panel">
+                    <div class="empty-state">
+                        Vyber položku ze sbírky.
+                    </div>
+                </section>
+            </main>
+        </section>
+
+<section id="settingsTab" class="tab-page">
+            <section class="settings-panel">
+                <div class="settings-heading">
+                    <div>
+                        <h2>Nastavení zdrojů</h2>
+                        <p class="muted-inline">Vyplň alespoň jeden účet. Hesla se ukládají pouze lokálně do složky data.</p>
+                    </div>
+                    <span id="settingsSourceStatus" class="status-badge status-pending">Načítám…</span>
+                </div>
+                <form id="settingsForm" class="settings-form">
+                    <div class="settings-card">
+                        <h3>Webshare</h3>
+                        <label>Uživatelské jméno<input id="settingsWebshareUsername" name="webshare_username" autocomplete="username"></label>
+                        <label>Heslo<input id="settingsWebsharePassword" name="webshare_password" type="password" autocomplete="current-password" placeholder="Ponechat uložené heslo"></label>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Fastshare</h3>
+                        <label>Uživatelské jméno<input id="settingsFastshareUsername" name="fastshare_username" autocomplete="username"></label>
+                        <label>Heslo<input id="settingsFastsharePassword" name="fastshare_password" type="password" autocomplete="current-password" placeholder="Ponechat uložené heslo"></label>
+                    </div>
+                    <div class="settings-card settings-card-wide">
+                        <h3>Metadata</h3>
+                        <label>Volitelná URL externí ČSFD/CZDB služby<input id="settingsCsfdApiUrl" name="csfd_api_url" placeholder="https://…"></label>
+                        <p class="muted-inline">Bez této URL aplikace používá vestavěné získávání metadat z ČSFD a IMDb.</p>
+                    </div>
+                    <div class="settings-actions">
+                        <button type="submit">Uložit nastavení</button>
+                        <button type="button" class="button-link" data-action="reload-settings">Načíst znovu</button>
+                    </div>
+                </form>
+
+                <div class="settings-divider"></div>
+
+                <div class="settings-heading">
+                    <div>
+                        <h2>Databáze</h2>
+                        <p class="muted-inline">Export a import celé sbírky (filmy, seriály a streamy) do JSON souboru.</p>
+                    </div>
+                </div>
+                <div class="settings-form">
+                    <div class="settings-card settings-card-wide">
+                        <h3>Export databáze</h3>
+                        <p class="muted-inline">Stáhne kompletní zálohu všech filmů, seriálů a streamů jako JSON soubor.</p>
+                        <button type="button" class="button-link" data-action="export-database">Exportovat databázi</button>
+                    </div>
+                    <div class="settings-card settings-card-wide">
+                        <h3>Import databáze</h3>
+                        <p class="muted-inline">Obnoví sbírku z JSON souboru. Existující položky se aktualizují, nové se přidají.</p>
+                        <label>Vyberte JSON soubor<input type="file" id="databaseImportFile" accept=".json"></label>
+                        <button type="button" class="danger" data-action="import-database">Importovat databázi</button>
+                        <span id="importStatus" class="muted-inline"></span>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </div>
+
+    <script src="static/app.js?v=0.4.0"></script>
+</body>
+</html>
