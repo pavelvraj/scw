@@ -47,7 +47,7 @@ Caddy poslouchá uvnitř kontejneru na portu 8765 a předává požadavky služb
 
 Při přehrávání aplikace nejdříve získá od poskytovatele odkaz na soubor. Webshare vrací odkaz, který lze předat přímo Kodi, takže video neteče přes domácí server. Fastshare v současné době vyžaduje cookie `FASTSHARE` i při použití přímého `download.php` odkazu. Fastshare proto zůstává přes aplikační proxy; cookie i přihlašovací údaje zůstávají pouze v Dockeru a do Kodi se neposílají.
 
-Proxy zachovává HTTP Range hlavičky, takže Kodi může video bufferovat a přetáčet. Pokud se chování Fastshare v budoucnu změní a poskytne odkaz použitelný bez cookie, lze ho předat přímo bez změny API aplikace.
+Proxy zachovává HTTP Range hlavičky, takže Kodi může video bufferovat a přetáčet. Pokud Fastshare v budoucnu začne poskytovat odkaz použitelný bez cookie, bude možné jeho přímé předávání znovu ověřit a zapnout.
 
 ## Kontrola provozu
 
