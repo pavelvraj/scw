@@ -115,7 +115,7 @@ Spuštění konkrétní verze:
 
 ```powershell
 Set-Location C:\Temp\SCW
-.\UPDATE.ps1 -Version v0.1.1
+.\UPDATE.ps1 -Version v0.3.0 -WslDistro Ubuntu-24.04
 ```
 
 Skript zachová `.env` a `data`, stáhne zdrojové soubory z GitHubu a znovu sestaví kontejnery přes Docker Compose. Podporuje Windows Docker engine i Docker engine uvnitř WSL2; při vypnutém Dockeru aktualizuje zdrojové soubory i tak a pouze vypíše příkaz ke spuštění po startu Dockeru.
