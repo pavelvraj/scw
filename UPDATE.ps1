@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "v0.3.1",
+    [string]$Version = "v0.3.2",
     [string]$WslDistro = ""
 )
 
@@ -290,7 +290,26 @@ if ($itemsToReplace.Count -gt 0) {
 }
 
 Write-Host "Checking out $Version..." -ForegroundColor Cyan
-Invoke-Git -Arguments @("checkout", "--detach", $Version)
+Invoke-Git -Arguments @("checkout", "--force", "--detach", $Version)
+
+$requiredFiles = @(
+    ".dockerignore",
+    ".env.example",
+    ".gitignore",
+    "Caddyfile",
+    "Dockerfile",
+    "Dockerfile.caddy",
+    "docker-compose.yml",
+    "requirements.txt",
+    "app"
+)
+$missingFiles = @(
+    $requiredFiles |
+        Where-Object { -not (Test-Path -LiteralPath (Join-Path $installPath $_)) }
+)
+if ($missingFiles.Count -gt 0) {
+    throw "Checkout did not restore required files: $($missingFiles -join ', ')"
+}
 
 $environmentFile = Join-Path $installPath ".env"
 if (-not (Test-Path -LiteralPath $environmentFile)) {

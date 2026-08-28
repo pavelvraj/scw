@@ -2,6 +2,13 @@
 
 Všechny významné změny tohoto projektu jsou zapisovány v tomto souboru.
 
+## [0.3.2] - 2026-08-28
+
+### Opraveno
+
+- updater po přesunutí starých souborů vynutí obnovení souborů z vybrané Git verze;
+- před spuštěním Docker Compose ověří, že existuje `Dockerfile.caddy`, `Dockerfile`, `docker-compose.yml` a ostatní nutné zdrojové soubory.
+
 ## [0.3.1] - 2026-08-28
 
 ### Opraveno
