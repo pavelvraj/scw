@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "v0.3.2",
+    [string]$Version = "",
     [string]$WslDistro = ""
 )
 
@@ -104,6 +104,15 @@ function Initialize-DockerRuntime {
         $candidates += $preferredDistro.Trim()
     }
 
+    $runningDistros = @(
+        & wsl.exe --list --running --quiet 2>$null |
+            ForEach-Object {
+                $name = ($_ -replace "`0", "").Trim().TrimStart("*").Trim()
+                if (-not [string]::IsNullOrWhiteSpace($name)) {
+                    $name
+                }
+            }
+    )
     $listedDistros = @(
         & wsl.exe --list --quiet 2>$null |
             ForEach-Object {
@@ -113,7 +122,7 @@ function Initialize-DockerRuntime {
                 }
             }
     )
-    foreach ($name in $listedDistros) {
+    foreach ($name in ($runningDistros + $listedDistros)) {
         if ($candidates -notcontains $name) {
             $candidates += $name
         }
@@ -244,11 +253,24 @@ if ($LASTEXITCODE -ne 0) {
     Invoke-Git -Arguments @("remote", "set-url", "origin", $repositoryUrl)
 }
 
-Write-Host "Downloading $Version from GitHub..." -ForegroundColor Cyan
-Invoke-Git -Arguments @("fetch", "--tags", "--force", "origin")
+$targetRef = "origin/main"
+$targetLabel = "latest main"
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    Write-Host "Downloading the latest version from GitHub main..." -ForegroundColor Cyan
+    Invoke-Git -Arguments @("fetch", "--prune", "--force", "origin", "main")
+} else {
+    $targetRef = $Version
+    $targetLabel = $Version
+    Write-Host "Downloading $Version from GitHub..." -ForegroundColor Cyan
+    Invoke-Git -Arguments @("fetch", "--tags", "--force", "origin")
+}
 
-$versionCommit = (& git -C $installPath rev-parse --verify "$Version^{commit}" 2>$null)
+$versionCommit = (& git -C $installPath rev-parse --verify "$targetRef^{commit}" 2>$null)
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($versionCommit)) {
+    if ([string]::IsNullOrWhiteSpace($Version)) {
+        throw "The latest GitHub main revision could not be resolved."
+    }
+
     $availableTags = @(& git -C $installPath tag --list "v*" --sort=-version:refname | Select-Object -First 10)
     $tagText = if ($availableTags.Count -gt 0) { $availableTags -join ", " } else { "none" }
     throw "Version $Version does not exist on GitHub. Available tags: $tagText"
@@ -289,8 +311,8 @@ if ($itemsToReplace.Count -gt 0) {
     Write-Host "Old source files were moved to $backupPath" -ForegroundColor Yellow
 }
 
-Write-Host "Checking out $Version..." -ForegroundColor Cyan
-Invoke-Git -Arguments @("checkout", "--force", "--detach", $Version)
+Write-Host "Checking out $targetLabel..." -ForegroundColor Cyan
+Invoke-Git -Arguments @("checkout", "--force", "--detach", $targetRef)
 
 $requiredFiles = @(
     ".dockerignore",
@@ -341,7 +363,7 @@ if ((Test-DockerEngine) -and (Test-DockerCompose)) {
     }
 }
 
-Write-Host "Update complete: $Version" -ForegroundColor Green
+Write-Host "Update complete: $targetLabel" -ForegroundColor Green
 Write-Host "Data preserved in: $(Join-Path $installPath 'data')"
 if ($itemsToReplace.Count -gt 0) {
     Write-Host "Backup preserved in: $backupPath"

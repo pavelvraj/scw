@@ -2,6 +2,14 @@
 
 Všechny významné změny tohoto projektu jsou zapisovány v tomto souboru.
 
+## [0.4.0] - 2026-08-28
+
+### Změněno
+
+- `UPDATE.ps1` bez parametrů stahuje nejnovější stav z větve `main`;
+- updater automaticky vybere WSL distribuci s funkčním Docker Engine;
+- parametry `-Version` a `-WslDistro` zůstávají pouze jako volitelné přepínače pro ruční zásahy.
+
 ## [0.3.2] - 2026-08-28
 
 ### Opraveno

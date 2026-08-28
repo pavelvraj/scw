@@ -2,7 +2,7 @@
 
 Webová aplikace pro vyhledávání, ukládání a přehrávání filmů a seriálů ze služeb Webshare a Fastshare. Aplikace používá lokální SQLite databázi a jednoduché webové rozhraní v češtině.
 
-Aktuální verze: **0.3.2**
+Aktuální verze: **0.4.0**
 
 ## Funkce
 
@@ -45,13 +45,15 @@ Caddy poslouchá uvnitř kontejneru na portu 8765 a předává požadavky služb
 
 ### Docker Engine uvnitř WSL2
 
-Updater automaticky rozpozná Docker Engine dostupný přes WSL2. Pro distribuci Ubuntu 24.04 lze aktualizaci spustit například takto:
+Updater automaticky rozpozná Docker Engine dostupný přes WSL2 a vybere distribuci, ve které Docker skutečně běží. Aktualizaci lze spustit bez parametrů:
 
 ```powershell
-.\UPDATE.ps1 -Version v0.3.2 -WslDistro Ubuntu-24.04
+.\UPDATE.ps1
 ```
 
 Updater používá linuxovou cestu `/mnt/c/Temp/SCW`, takže Compose správně najde `docker-compose.yml`, `.env`, `Caddyfile` i adresář `data`.
+
+Updater vždy stáhne nejnovější stav z větve `main`. Parametry `-Version` a `-WslDistro` zůstávají pouze pro výjimečné ruční použití.
 
 Ruční spuštění Compose z Windows PowerShellu přes WSL:
 
@@ -115,7 +117,7 @@ Spuštění konkrétní verze:
 
 ```powershell
 Set-Location C:\Temp\SCW
-.\UPDATE.ps1 -Version v0.3.2 -WslDistro Ubuntu-24.04
+.\UPDATE.ps1
 ```
 
 Skript zachová `.env` a `data`, stáhne zdrojové soubory z GitHubu a znovu sestaví kontejnery přes Docker Compose. Podporuje Windows Docker engine i Docker engine uvnitř WSL2; při vypnutém Dockeru aktualizuje zdrojové soubory i tak a pouze vypíše příkaz ke spuštění po startu Dockeru.
