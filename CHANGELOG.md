@@ -2,6 +2,20 @@
 
 Všechny významné změny tohoto projektu jsou zapisovány v tomto souboru.
 
+## [0.2.0] - 2026-08-28
+
+### Změněno
+
+- Webshare se nyní přehrává přes přímý odkaz poskytovatele, takže při úspěšném rozlišení neteče video přes domácí Docker server.
+- Fastshare zůstává přes serverovou proxy, protože jeho `download.php` odkaz vyžaduje cookie `FASTSHARE`.
+- API `/api/file_link/...` vrací režim `direct` nebo `proxy` a při chybě přímého odkazu použije fallback proxy.
+- Proxy zachovává Range hlavičky potřebné pro bufferování a přetáčení v Kodi.
+
+### Opraveno
+
+- Fastshare free stránka se už nepovažuje za použitelný stream odkaz.
+- Přístupové tokeny a cookies se neposílají do klienta ani do Kodi.
+
 ## [0.1.1] - 2026-08-21
 
 ### Opraveno

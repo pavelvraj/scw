@@ -2,7 +2,7 @@
 
 Webová aplikace pro vyhledávání, ukládání a přehrávání filmů a seriálů ze služeb Webshare a Fastshare. Aplikace používá lokální SQLite databázi a jednoduché webové rozhraní v češtině.
 
-Aktuální verze: **0.1.1**
+Aktuální verze: **0.2.0**
 
 ## Funkce
 
@@ -10,7 +10,8 @@ Aktuální verze: **0.1.1**
 - metadata z ČSFD/IMDb včetně plakátu, hodnocení, žánrů a popisu,
 - rozpoznání sezón a epizod ze jmen souborů,
 - ukládání vybraných streamů do lokální sbírky,
-- HTML5 přehrávání přes aplikační proxy,
+- HTML5 přehrávání přímým odkazem Webshare, pokud ho služba poskytne,
+- serverová proxy pro Fastshare, která bezpečně přidává cookie potřebnou pro stream,
 - stahování streamů,
 - aktualizace sbírky a kontrola nefunkčních streamů,
 - úprava názvu, typu, žánrů, plakátu, popisu a vyhledávacího dotazu,
@@ -41,6 +42,12 @@ Konfigurace je připravená pro domácí síť za routerem. Veřejný i Docker p
    ```
 
 Caddy poslouchá uvnitř kontejneru na portu 8765 a předává požadavky službě `streamcinema` na jejím interním portu 8765. Caddy je záměrně nastavený pouze na HTTP.
+
+## Přehrávání a rychlost
+
+Při přehrávání aplikace nejdříve získá od poskytovatele odkaz na soubor. Webshare vrací odkaz, který lze předat přímo Kodi, takže video neteče přes domácí server. Fastshare v současné době vyžaduje cookie `FASTSHARE` i při použití přímého `download.php` odkazu. Fastshare proto zůstává přes aplikační proxy; cookie i přihlašovací údaje zůstávají pouze v Dockeru a do Kodi se neposílají.
+
+Proxy zachovává HTTP Range hlavičky, takže Kodi může video bufferovat a přetáčet. Pokud se chování Fastshare v budoucnu změní a poskytne odkaz použitelný bez cookie, lze ho předat přímo bez změny API aplikace.
 
 ## Kontrola provozu
 

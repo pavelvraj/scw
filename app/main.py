@@ -1870,16 +1870,34 @@ def get_file_link(ident: str):
     try:
         ident = unquote(ident or "")
         provider, file_id = ident.split(":", 1)
+        if provider not in ("webshare", "fastshare") or not file_id:
+            return {"link": None, "mode": "unavailable"}
+
+        # Webshare's file_link endpoint returns a link that Kodi can consume
+        # directly. The access token is used only while resolving the link and
+        # is never sent to the client.
         if provider == "webshare":
-            link = f"api/stream_proxy/{provider}:{file_id}"
-        elif provider == "fastshare":
-            link = f"api/stream_proxy/{provider}:{file_id}"
-        else:
-            link = None
-        return {"link": link}
+            try:
+                direct_link = WS.get_link(file_id)
+            except Exception as exc:
+                print(f"Webshare direct link error: {exc}")
+                direct_link = ""
+
+            if is_webshare_url(direct_link):
+                return {"link": direct_link, "mode": "direct"}
+
+        # Fastshare download.php links require the FASTSHARE cookie. Returning
+        # such a URL directly would make Kodi fail (or fall back to an HTML
+        # page), so keep the cookie-bearing request on the server.
+        proxy_link = f"api/stream_proxy/{provider}:{file_id}"
+        return {
+            "link": proxy_link,
+            "mode": "proxy",
+            "reason": "provider_cookie_required" if provider == "fastshare" else "direct_link_unavailable",
+        }
     except Exception as exc:
         print(f"Link error: {exc}")
-        return {"link": None}
+        return {"link": None, "mode": "unavailable"}
 
 
 def stored_stream_url(provider, file_id):
@@ -1896,7 +1914,7 @@ def stored_stream_url(provider, file_id):
 
 def is_fastshare_url(url):
     parsed = urlparse(url or "")
-    return parsed.scheme in ("http", "https") and (
+    return parsed.scheme in ("http", "https") and "/free/" not in parsed.path and (
         parsed.netloc.endswith("fastshare.cloud") or parsed.netloc.endswith("fastshare.cz")
     )
 
