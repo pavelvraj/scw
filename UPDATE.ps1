@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "v0.1.1"
+    [string]$Version = "v0.2.1"
 )
 
 $ErrorActionPreference = "Stop"
@@ -17,6 +17,11 @@ function Invoke-Git {
     if ($LASTEXITCODE -ne 0) {
         throw "Git failed: git -C `"$installPath`" $($Arguments -join ' ')"
     }
+}
+
+function Test-DockerEngine {
+    & docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
+    return ($LASTEXITCODE -eq 0)
 }
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
@@ -55,7 +60,12 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($versionCommit)) {
     throw "Version $Version does not exist on GitHub. Available tags: $tagText"
 }
 
-if (Test-Path -LiteralPath (Join-Path $installPath "docker-compose.yml")) {
+$dockerEngineAvailable = Test-DockerEngine
+if (-not $dockerEngineAvailable) {
+    Write-Warning "Docker Desktop/Engine is not running. The files will be updated, but Docker services will not be restarted."
+}
+
+if ($dockerEngineAvailable -and (Test-Path -LiteralPath (Join-Path $installPath "docker-compose.yml"))) {
     Write-Host "Stopping existing Docker services..." -ForegroundColor Cyan
     & docker compose -f (Join-Path $installPath "docker-compose.yml") down
     if ($LASTEXITCODE -ne 0) {
@@ -89,10 +99,15 @@ if (-not (Test-Path -LiteralPath $environmentFile)) {
 New-Item -ItemType Directory -Force -Path (Join-Path $installPath "data") | Out-Null
 Set-Location -LiteralPath $installPath
 
-Write-Host "Building and starting Docker Compose..." -ForegroundColor Cyan
-& docker compose up -d --build
-if ($LASTEXITCODE -ne 0) {
-    throw "Docker Compose failed. Check: docker compose logs --tail=100"
+if (Test-DockerEngine) {
+    Write-Host "Building and starting Docker Compose..." -ForegroundColor Cyan
+    & docker compose up -d --build
+    if ($LASTEXITCODE -ne 0) {
+        throw "Docker Compose failed. Check: docker compose logs --tail=100"
+    }
+} else {
+    Write-Host "Source update complete. Docker services were not started because Docker Desktop/Engine is not running." -ForegroundColor Yellow
+    Write-Host "Start Docker Desktop, then run: docker compose up -d --build" -ForegroundColor Yellow
 }
 
 Write-Host "Update complete: $Version" -ForegroundColor Green

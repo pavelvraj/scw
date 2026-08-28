@@ -2,6 +2,14 @@
 
 Všechny významné změny tohoto projektu jsou zapisovány v tomto souboru.
 
+## [0.2.1] - 2026-08-28
+
+### Opraveno
+
+- `UPDATE.ps1` už neselže při vypnutém Docker Desktopu; aktualizuje soubory a restart Dockeru přeskočí.
+- updater zkontroluje dostupnost Docker engine před příkazem `docker compose` a vypíše další postup.
+- odstraněn zastaralý atribut `version` z `docker-compose.yml`.
+
 ## [0.2.0] - 2026-08-28
 
 ### Změněno
