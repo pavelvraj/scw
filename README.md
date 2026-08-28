@@ -2,7 +2,7 @@
 
 Webová aplikace pro vyhledávání, ukládání a přehrávání filmů a seriálů ze služeb Webshare a Fastshare. Aplikace používá lokální SQLite databázi a jednoduché webové rozhraní v češtině.
 
-Aktuální verze: **0.2.1**
+Aktuální verze: **0.3.0**
 
 ## Funkce
 
@@ -43,6 +43,30 @@ Konfigurace je připravená pro domácí síť za routerem. Veřejný i Docker p
 
 Caddy poslouchá uvnitř kontejneru na portu 8765 a předává požadavky službě `streamcinema` na jejím interním portu 8765. Caddy je záměrně nastavený pouze na HTTP.
 
+### Docker Engine uvnitř WSL2
+
+Updater automaticky rozpozná Docker Engine dostupný přes WSL2. Pro distribuci Ubuntu 24.04 lze aktualizaci spustit například takto:
+
+```powershell
+.\UPDATE.ps1 -Version v0.3.0 -WslDistro Ubuntu-24.04
+```
+
+Updater používá linuxovou cestu `/mnt/c/Temp/SCW`, takže Compose správně najde `docker-compose.yml`, `.env`, `Caddyfile` i adresář `data`.
+
+Ruční spuštění Compose z Windows PowerShellu přes WSL:
+
+```powershell
+wsl -d Ubuntu-24.04 -u root -- docker compose --project-directory /mnt/c/Temp/SCW --env-file /mnt/c/Temp/SCW/.env -f /mnt/c/Temp/SCW/docker-compose.yml up -d --build
+```
+
+Pokud WSL používá výchozí NAT networking, spusť po aktualizaci v PowerShellu jako správce:
+
+```powershell
+.\Configure-WslPortProxy.ps1 -Distro Ubuntu-24.04 -Port 8765
+```
+
+Skript přesměruje Windows TCP port 8765 na aktuální IP adresu WSL a povolí port ve Windows Firewallu. Router nadále směruje veřejný port 8765 na Windows IP počítače. IP adresa WSL se po restartu může změnit, proto skript po restartu WSL případně spusť znovu. Při použití WSL mirrored networking režimu portproxy obvykle není potřeba.
+
 ## Přehrávání a rychlost
 
 Při přehrávání aplikace nejdříve získá od poskytovatele odkaz na soubor. Webshare vrací odkaz, který lze předat přímo Kodi, takže video neteče přes domácí server. Fastshare v současné době vyžaduje cookie `FASTSHARE` i při použití přímého `download.php` odkazu. Fastshare proto zůstává přes aplikační proxy; cookie i přihlašovací údaje zůstávají pouze v Dockeru a do Kodi se neposílají.
@@ -55,6 +79,12 @@ Stav kontejnerů:
 
 ```powershell
 docker compose ps
+```
+
+Pokud Docker běží pouze ve WSL2, použij:
+
+```powershell
+wsl -d Ubuntu-24.04 -u root -- docker compose --project-directory /mnt/c/Temp/SCW --env-file /mnt/c/Temp/SCW/.env -f /mnt/c/Temp/SCW/docker-compose.yml ps
 ```
 
 Kontrola aplikace z hostitele:
@@ -88,7 +118,7 @@ Set-Location C:\Temp\SCW
 .\UPDATE.ps1 -Version v0.1.1
 ```
 
-Skript zachová `.env` a `data`, stáhne zdrojové soubory z GitHubu a znovu sestaví kontejnery přes `docker compose up -d --build`. Pokud Docker Desktop neběží, aktualizuje zdrojové soubory i tak a pouze vypíše příkaz ke spuštění po startu Dockeru.
+Skript zachová `.env` a `data`, stáhne zdrojové soubory z GitHubu a znovu sestaví kontejnery přes Docker Compose. Podporuje Windows Docker engine i Docker engine uvnitř WSL2; při vypnutém Dockeru aktualizuje zdrojové soubory i tak a pouze vypíše příkaz ke spuštění po startu Dockeru.
 
 ## Nastavení účtů
 

@@ -2,6 +2,20 @@
 
 Všechny významné změny tohoto projektu jsou zapisovány v tomto souboru.
 
+## [0.3.0] - 2026-08-28
+
+### Přidáno
+
+- podpora Docker Engine spuštěného přímo v distribuci WSL2,
+- automatická detekce funkční WSL distribuce s Dockerem,
+- převod Windows cesty `C:\Temp\SCW` na WSL cestu `/mnt/c/Temp/SCW`,
+- `Configure-WslPortProxy.ps1` pro zpřístupnění portu 8765 z Windows do WSL2.
+
+### Změněno
+
+- `UPDATE.ps1` používá pro WSL Docker příkazy `wsl.exe ... -- docker compose` a správně předává Compose soubor, projektovou cestu i `.env`.
+- updater podporuje parametr `-WslDistro` a proměnnou `SCW_WSL_DISTRO`.
+
 ## [0.2.1] - 2026-08-28
 
 ### Opraveno
