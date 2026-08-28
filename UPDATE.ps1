@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "v0.3.0",
+    [string]$Version = "v0.3.1",
     [string]$WslDistro = ""
 )
 
@@ -50,8 +50,18 @@ function Test-WindowsDockerEngine {
         return $false
     }
 
-    & docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
-    return ($LASTEXITCODE -eq 0)
+    $exitCode = 1
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "SilentlyContinue"
+        & docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
+        $exitCode = $LASTEXITCODE
+    } catch {
+        $exitCode = 1
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+    return ($exitCode -eq 0)
 }
 
 function Test-WslDockerEngine {
@@ -60,8 +70,18 @@ function Test-WslDockerEngine {
         [string]$DistroName
     )
 
-    & wsl.exe --distribution $DistroName --user root -- docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
-    return ($LASTEXITCODE -eq 0)
+    $exitCode = 1
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "SilentlyContinue"
+        & wsl.exe --distribution $DistroName --user root -- docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
+        $exitCode = $LASTEXITCODE
+    } catch {
+        $exitCode = 1
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+    return ($exitCode -eq 0)
 }
 
 function Initialize-DockerRuntime {
@@ -126,12 +146,22 @@ function Test-DockerCompose {
         return $false
     }
 
-    if ($script:dockerMode -eq "windows") {
-        & docker compose version 2>$null | Out-Null
-    } else {
-        & wsl.exe --distribution $script:selectedWslDistro --user root -- docker compose version 2>$null | Out-Null
+    $exitCode = 1
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "SilentlyContinue"
+        if ($script:dockerMode -eq "windows") {
+            & docker compose version 2>$null | Out-Null
+        } else {
+            & wsl.exe --distribution $script:selectedWslDistro --user root -- docker compose version 2>$null | Out-Null
+        }
+        $exitCode = $LASTEXITCODE
+    } catch {
+        $exitCode = 1
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
     }
-    return ($LASTEXITCODE -eq 0)
+    return ($exitCode -eq 0)
 }
 
 function Invoke-Docker {

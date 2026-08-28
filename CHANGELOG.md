@@ -2,6 +2,13 @@
 
 Všechny významné změny tohoto projektu jsou zapisovány v tomto souboru.
 
+## [0.3.1] - 2026-08-28
+
+### Opraveno
+
+- diagnostické testy Windows Docker CLI už nepřeruší updater při chybějícím Windows Docker Desktop engine;
+- updater může po této chybě pokračovat detekcí Docker Engine v WSL2.
+
 ## [0.3.0] - 2026-08-28
 
 ### Přidáno
